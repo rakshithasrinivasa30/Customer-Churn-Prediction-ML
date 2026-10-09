@@ -1,0 +1,31 @@
+DATA CLEANING NOTES
+
+Original dataset:
+33 columns
+
+Target:
+Churn Label
+
+Columns removed:
+CustomerID - customer identifier
+Count - not useful for prediction
+Country - not useful/constant
+State - not useful/constant
+Churn Reason - information related to the churn outcome
+Churn Score - derived churn information
+Churn Value - another representation of the churn outcome
+CLTV - excluded from the initial model
+
+Output:
+cleaned_churn_data.csv
+
+
+DATA CLEANING VERIFICATION CHECKLIST
+
+[.] Dataset loads correctly
+[.] Missing values checked
+[.] Duplicate rows checked
+[.] Data types checked
+[.] Target column confirmed
+[.] Unnecessary columns identified
+[.] Cleaned CSV created
