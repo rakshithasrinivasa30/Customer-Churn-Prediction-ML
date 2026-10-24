@@ -1,0 +1,10 @@
+Day 9 — Final Model Evaluation
+
+Selected Model: Logistic Regression
+
+Accuracy: 0.8041
+Precision: 0.6467
+Recall: 0.5775
+F1-Score: 0.6102
+
+Selection basis: F1-score, followed by recall and accuracy.
