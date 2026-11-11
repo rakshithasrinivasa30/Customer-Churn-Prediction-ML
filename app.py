@@ -1,130 +1,181 @@
+
 import streamlit as st
 import pandas as pd
-from pathlib import Path
-import sys
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-from prediction_pipeline import predict_churn
-# Page configuration
+import joblib
+import os
+
+# --------------------------------
+# 1. Load trained ML model
+# --------------------------------
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+model_path = os.path.join(
+    BASE_DIR,
+    "models",
+    "best_logistic_regression.pkl"
+)
+
+model = joblib.load(model_path)
+
+# --------------------------------
+# 2. Page configuration
+# --------------------------------
+
 st.set_page_config(
     page_title="Customer Churn Prediction",
     page_icon="📊",
     layout="wide"
 )
 
-# Project title
+# --------------------------------
+# 3. Project title
+# --------------------------------
+
 st.title("📊 Customer Churn Prediction System")
 
-# Introduction
 st.write("""
 Welcome to the Customer Churn Prediction System!
 
-This application collects customer information
-to help identify customers who may leave the service.
-
-Enter customer details below to get started.
+This application uses Machine Learning to predict
+whether a customer is likely to leave a service.
+Enter customer details below to get a prediction.
 """)
 
 st.divider()
 
-st.subheader("Customer Information")
-st.write("Please enter the customer details below.")
-st.subheader("Enter Customer Details")
+# --------------------------------
+# 4. Customer information
+# --------------------------------
 
-# Customer Basic Information
-customer_id = st.text_input("Customer ID")
+st.header("👤 Customer Information")
 
-gender = st.selectbox(
-    "Gender",
-    ["Male", "Female"]
-)
+col1, col2 = st.columns(2)
 
-senior_citizen = st.selectbox(
-    "Senior Citizen",
-    ["Yes", "No"]
-)
+with col1:
 
-partner = st.selectbox(
-    "Partner",
-    ["Yes", "No"]
-)
+    customer_id = st.text_input("Customer ID")
 
-dependents = st.selectbox(
-    "Dependents",
-    ["Yes", "No"]
-)
+    gender = st.selectbox(
+        "Gender", ["Female", "Male"]
+    )
 
-tenure = st.number_input(
-    "Tenure Months",
-    min_value=0,
-    max_value=100,
-    value=12
-)
+    senior_citizen = st.selectbox(
+        "Senior Citizen", ["No", "Yes"]
+    )
 
-monthly_charges = st.number_input(
-    "Monthly Charges",
-    min_value=0.0,
-    value=70.0
-)
+    partner = st.selectbox(
+        "Partner", ["Yes", "No"]
+    )
 
-total_charges = st.number_input(
-    "Total Charges",
-    min_value=0.0,
-    value=840.0
-)
-latitude = st.number_input("Latitude", value=0.0)
+    dependents = st.selectbox(
+        "Dependents", ["Yes", "No"]
+    )
 
-longitude = st.number_input("Longitude", value=0.0)
+    tenure = st.number_input(
+        "Tenure Months",
+        min_value=0,
+        max_value=100,
+        value=12
+    )
 
-cltv = st.number_input("CLTV", min_value=0.0, value=0.0)
+    zip_code = st.number_input(
+        "Zip Code",
+        min_value=0,
+        value=90001
+    )
 
-st.write("Customer details entered successfully!")
-st.subheader("Internet and Phone Services")
+with col2:
 
-phone_service = st.selectbox(
-    "Phone Service",
-    ["Yes", "No"]
-)
+    latitude = st.number_input(
+        "Latitude",
+        value=33.9731,
+        format="%.4f"
+    )
 
-multiple_lines = st.selectbox(
-    "Multiple Lines",
-    ["Yes", "No", "No phone service"]
-)
+    longitude = st.number_input(
+        "Longitude",
+        value=-118.2479,
+        format="%.4f"
+    )
 
-internet_service = st.selectbox(
-    "Internet Service",
-    ["DSL", "Fiber optic", "No"]
-)
+    monthly_charges = st.number_input(
+        "Monthly Charges",
+        min_value=0.0,
+        value=70.0
+    )
 
-online_security = st.selectbox(
-    "Online Security",
-    ["Yes", "No", "No internet service"]
-)
+    total_charges = st.number_input(
+        "Total Charges",
+        min_value=0.0,
+        value=840.0
+    )
 
-online_backup = st.selectbox(
-    "Online Backup",
-    ["Yes", "No", "No internet service"]
-)
+st.divider()
 
-device_protection = st.selectbox(
-    "Device Protection",
-    ["Yes", "No", "No internet service"]
-)
+# --------------------------------
+# 5. Internet and phone services
+# --------------------------------
 
-tech_support = st.selectbox(
-    "Tech Support",
-    ["Yes", "No", "No internet service"]
-)
+st.header("📱 Internet and Phone Services")
 
-streaming_tv = st.selectbox(
-    "Streaming TV",
-    ["Yes", "No", "No internet service"]
-)
+col3, col4 = st.columns(2)
 
-streaming_movies = st.selectbox(
-    "Streaming Movies",
-    ["Yes", "No", "No internet service"]
-)
-st.subheader("Contract and Payment Information")
+with col3:
+
+    phone_service = st.selectbox(
+        "Phone Service", ["Yes", "No"]
+    )
+
+    multiple_lines = st.selectbox(
+        "Multiple Lines",
+        ["Yes", "No", "No phone service"]
+    )
+
+    internet_service = st.selectbox(
+        "Internet Service",
+        ["DSL", "Fiber optic", "No"]
+    )
+
+    online_security = st.selectbox(
+        "Online Security",
+        ["Yes", "No", "No internet service"]
+    )
+
+    online_backup = st.selectbox(
+        "Online Backup",
+        ["Yes", "No", "No internet service"]
+    )
+
+with col4:
+
+    device_protection = st.selectbox(
+        "Device Protection",
+        ["Yes", "No", "No internet service"]
+    )
+
+    tech_support = st.selectbox(
+        "Tech Support",
+        ["Yes", "No", "No internet service"]
+    )
+
+    streaming_tv = st.selectbox(
+        "Streaming TV",
+        ["Yes", "No", "No internet service"]
+    )
+
+    streaming_movies = st.selectbox(
+        "Streaming Movies",
+        ["Yes", "No", "No internet service"]
+    )
+
+st.divider()
+
+# --------------------------------
+# 6. Contract and payment details
+# --------------------------------
+
+st.header("💳 Contract and Payment Information")
 
 contract = st.selectbox(
     "Contract",
@@ -132,8 +183,7 @@ contract = st.selectbox(
 )
 
 paperless_billing = st.selectbox(
-    "Paperless Billing",
-    ["Yes", "No"]
+    "Paperless Billing", ["Yes", "No"]
 )
 
 payment_method = st.selectbox(
@@ -146,25 +196,28 @@ payment_method = st.selectbox(
     ]
 )
 
-st.write("All customer information fields are completed!")
-
 st.divider()
 
-st.subheader("🔮 Churn Prediction")
+# --------------------------------
+# 7. Customer churn prediction
+# --------------------------------
+
+st.header("🔮 Churn Prediction")
 
 if st.button("Predict Customer Churn", type="primary"):
 
-    customer = pd.DataFrame([{
+    customer = {
+        "Zip Code": zip_code,
+        "Lat Long": f"{latitude}, {longitude}",
+        "Latitude": latitude,
+        "Longitude": longitude,
         "Gender": gender,
-        "Senior Citizen": senior_citizen,
+        "Senior Citizen": (
+            1 if senior_citizen == "Yes" else 0
+        ),
         "Partner": partner,
         "Dependents": dependents,
         "Tenure Months": tenure,
-        "Latitude": latitude,
-        "Longitude": longitude,
-        "Monthly Charges": monthly_charges,
-        "Total Charges": total_charges,
-        "CLTV": cltv,
         "Phone Service": phone_service,
         "Multiple Lines": multiple_lines,
         "Internet Service": internet_service,
@@ -176,22 +229,42 @@ if st.button("Predict Customer Churn", type="primary"):
         "Streaming Movies": streaming_movies,
         "Contract": contract,
         "Paperless Billing": paperless_billing,
-        "Payment Method": payment_method
-    }])
+        "Payment Method": payment_method,
+        "Monthly Charges": monthly_charges,
+        "Total Charges": total_charges
+    }
 
     try:
-        result = predict_churn(customer)
-        prediction = result["Prediction"].iloc[0]
+
+        customer_df = pd.DataFrame([customer])
+
+        # Match exact model feature order
+        customer_df = customer_df[
+            model.feature_names_in_
+        ]
+
+        # Generate prediction
+        prediction = model.predict(customer_df)[0]
 
         st.subheader("Prediction Result")
 
-        if prediction == "Churn":
-            st.error("Prediction: Churn")
-            st.write("This customer may leave the service.")
+        if prediction == 1:
+
+            st.error(
+                "⚠️ This customer is likely to churn!"
+            )
 
         else:
-            st.success("Prediction: No Churn")
-            st.write("This customer may continue using the service.")
 
-    except Exception as error:
-        st.error(f"Prediction error: {error}")
+            st.success(
+                "✅ This customer is likely to stay!"
+            )
+
+        st.write("Customer ID:", customer_id)
+
+        st.subheader("Customer Input Summary")
+        st.dataframe(customer_df)
+
+    except Exception as e:
+
+        st.error(f"Prediction Error: {e}")
