@@ -1,154 +1,199 @@
-import streamlit as st
-import pandas as pd
 
-# Page configuration
+from pathlib import Path
+import sys
+
+import pandas as pd
+import streamlit as st
+
+# Import your existing prediction function
+PROJECT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(PROJECT_DIR / "src"))
+
+from prediction_pipeline import predict_churn
+
+
 st.set_page_config(
     page_title="Customer Churn Prediction",
     page_icon="📊",
-    layout="wide"
+    layout="centered"
 )
 
-# Project title
-st.title("📊 Customer Churn Prediction System")
-
-# Introduction
-st.write("""
-Welcome to the Customer Churn Prediction System!
-
-This application collects customer information
-to help identify customers who may leave the service.
-
-Enter customer details below to get started.
-""")
-
-st.divider()
-
-st.subheader("Customer Information")
-st.write("Please enter the customer details below.")
-st.subheader("Enter Customer Details")
-
-# Customer Basic Information
-customer_id = st.text_input("Customer ID")
-
-gender = st.selectbox(
-    "Gender",
-    ["Male", "Female"]
+st.title("Customer Churn Prediction")
+st.write(
+    "Enter customer details to estimate whether the customer "
+    "is likely to leave the service."
 )
 
-senior_citizen = st.selectbox(
-    "Senior Citizen",
-    ["Yes", "No"]
+st.info(
+    "Complete all fields. The prediction is an estimate from "
+    "the trained machine-learning model, not a guarantee."
 )
 
-partner = st.selectbox(
-    "Partner",
-    ["Yes", "No"]
-)
+with st.form("customer_form"):
 
-dependents = st.selectbox(
-    "Dependents",
-    ["Yes", "No"]
-)
+    st.subheader("Customer Information")
 
-tenure = st.number_input(
-    "Tenure Months",
-    min_value=0,
-    max_value=100,
-    value=12
-)
+    gender = st.selectbox("Gender", ["Female", "Male"])
 
-monthly_charges = st.number_input(
-    "Monthly Charges",
-    min_value=0.0,
-    value=70.0
-)
+    senior = st.selectbox(
+        "Senior Citizen", ["No", "Yes"]
+    )
+    partner = st.selectbox("Partner", ["Yes", "No"])
+    dependents = st.selectbox("Dependents", ["Yes", "No"])
 
-total_charges = st.number_input(
-    "Total Charges",
-    min_value=0.0,
-    value=840.0
-)
+    tenure = st.number_input(
+        "Tenure Months", min_value=0, max_value=100,
+        value=12, step=1
+    )
 
-st.write("Customer details entered successfully!")
-st.subheader("Internet and Phone Services")
+    phone = st.selectbox("Phone Service", ["Yes", "No"])
 
-phone_service = st.selectbox(
-    "Phone Service",
-    ["Yes", "No"]
-)
+    multiple_lines = st.selectbox(
+        "Multiple Lines",
+        ["No", "Yes", "No phone service"]
+    )
 
-multiple_lines = st.selectbox(
-    "Multiple Lines",
-    ["Yes", "No", "No phone service"]
-)
+    internet = st.selectbox(
+        "Internet Service", ["DSL", "Fiber optic", "No"]
+    )
 
-internet_service = st.selectbox(
-    "Internet Service",
-    ["DSL", "Fiber optic", "No"]
-)
+    online_security = st.selectbox(
+        "Online Security",
+        ["Yes", "No", "No internet service"]
+    )
+    online_backup = st.selectbox(
+        "Online Backup",
+        ["Yes", "No", "No internet service"]
+    )
+    device_protection = st.selectbox(
+        "Device Protection",
+        ["Yes", "No", "No internet service"]
+    )
+    tech_support = st.selectbox(
+        "Tech Support",
+        ["Yes", "No", "No internet service"]
+    )
+    streaming_tv = st.selectbox(
+        "Streaming TV",
+        ["Yes", "No", "No internet service"]
+    )
+    streaming_movies = st.selectbox(
+        "Streaming Movies",
+        ["Yes", "No", "No internet service"]
+    )
 
-online_security = st.selectbox(
-    "Online Security",
-    ["Yes", "No", "No internet service"]
-)
+    contract = st.selectbox(
+        "Contract",
+        ["Month-to-month", "One year", "Two year"]
+    )
 
-online_backup = st.selectbox(
-    "Online Backup",
-    ["Yes", "No", "No internet service"]
-)
+    paperless = st.selectbox(
+        "Paperless Billing", ["Yes", "No"]
+    )
 
-device_protection = st.selectbox(
-    "Device Protection",
-    ["Yes", "No", "No internet service"]
-)
+    payment = st.selectbox(
+        "Payment Method",
+        [
+            "Electronic check",
+            "Mailed check",
+            "Bank transfer (automatic)",
+            "Credit card (automatic)"
+        ]
+    )
 
-tech_support = st.selectbox(
-    "Tech Support",
-    ["Yes", "No", "No internet service"]
-)
+    monthly_charges = st.number_input(
+        "Monthly Charges",
+        min_value=0.0,
+        value=70.0,
+        step=1.0
+    )
 
-streaming_tv = st.selectbox(
-    "Streaming TV",
-    ["Yes", "No", "No internet service"]
-)
+    total_charges = st.number_input(
+        "Total Charges",
+        min_value=0.0,
+        value=840.0,
+        step=10.0
+    )
 
-streaming_movies = st.selectbox(
-    "Streaming Movies",
-    ["Yes", "No", "No internet service"]
-)
-st.subheader("Contract and Payment Information")
+    cltv = st.number_input(
+        "CLTV",
+        min_value=0,
+        value=4000,
+        step=100
+    )
 
-contract = st.selectbox(
-    "Contract",
-    ["Month-to-month", "One year", "Two year"]
-)
+    submitted = st.form_submit_button(
+        "Predict Churn",
+        type="primary",
+        use_container_width=True
+    )
 
-paperless_billing = st.selectbox(
-    "Paperless Billing",
-    ["Yes", "No"]
-)
 
-payment_method = st.selectbox(
-    "Payment Method",
-    [
-        "Electronic check",
-        "Mailed check",
-        "Bank transfer (automatic)",
-        "Credit card (automatic)"
-    ]
-)
+if submitted:
 
-st.write("All customer information fields are completed!")
+    # Basic input validation
+    if tenure < 0 or monthly_charges < 0:
+        st.error("Please enter valid non-negative values.")
+    elif total_charges < 0 or cltv < 0:
+        st.error("Charges and CLTV cannot be negative.")
+    else:
 
-st.divider()
+        customer = pd.DataFrame([{
+            "Gender": gender,
+            "Senior Citizen": senior,
+            "Partner": partner,
+            "Dependents": dependents,
+            "Tenure Months": tenure,
+            "Phone Service": phone,
+            "Multiple Lines": multiple_lines,
+            "Internet Service": internet,
+            "Online Security": online_security,
+            "Online Backup": online_backup,
+            "Device Protection": device_protection,
+            "Tech Support": tech_support,
+            "Streaming TV": streaming_tv,
+            "Streaming Movies": streaming_movies,
+            "Contract": contract,
+            "Paperless Billing": paperless,
+            "Payment Method": payment,
+            "Monthly Charges": monthly_charges,
+            "Total Charges": total_charges,
+            "CLTV": cltv
+        }])
 
-st.subheader("🔮 Churn Prediction")
+        try:
+            result = predict_churn(customer)
+            prediction = result["Prediction"].iloc[0]
 
-if st.button("Predict Customer Churn", type="primary"):
+            st.subheader("Prediction Result")
 
-    st.info("Customer details submitted successfully!")
+            if prediction == "Churn":
+                st.error("Prediction: Churn")
+                st.write(
+                    "The model predicts that this customer may "
+                    "leave the service. Consider reviewing their "
+                    "service experience and retention options."
+                )
 
-    st.warning(
-        "The prediction model is not connected yet. "
-        "Please connect your trained ML model to generate a prediction."
+            elif prediction == "No Churn":
+                st.success("Prediction: No Churn")
+                st.write(
+                    "The model predicts that this customer may "
+                    "remain with the service. Continue providing "
+                    "good customer support."
+                )
+
+            else:
+                st.warning(
+                    f"The model returned an unexpected label: "
+                    f"{prediction}"
+                )
+
+        except (ValueError, TypeError) as error:
+            st.error(f"Please check the customer details: {error}")
+
+        except Exception:
+         st.error(
+        "Sorry, the prediction could not be completed. "
+        "Please try again or contact the project team."
     )
